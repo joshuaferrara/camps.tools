@@ -1,0 +1,5 @@
+template-file-path: wxr-messenger/cloudformation.yaml
+parameters:
+  DomainName: camps.tools
+  BucketName: wxr-messenger-emails
+  AppName: wxr-messenger-auto-responder

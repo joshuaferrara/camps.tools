@@ -1,0 +1,239 @@
+Parameters:
+  DomainName:
+    Type: String
+    Default: wxr.tools
+    Description: The domain name for the SES email identity.
+
+  BucketName:
+    Type: String
+    Default: wxr-messenger-emails
+    Description: The name of the S3 bucket where emails will be stored.
+
+  AppName:
+    Type: String
+    Default: wxr-messenger-auto-responder
+    Description: The name of the application, used for naming resources.
+
+Resources:
+  # IAM role for the Lambda function
+  IAMLambdaExecRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AppName}-LambdaExecRole
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service: lambda.amazonaws.com
+      MaxSessionDuration: 3600
+      Tags:
+        - Key: app
+          Value: !Ref AppName
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+
+  # Managed policy for the Lambda execution role
+  IAMManagedPolicy:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${AppName}-LambdaExecPolicy
+      Path: /
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          # Allow the Lambda function to write logs to CloudWatch
+          - Sid: Logging
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: '*'
+          # Allow the Lambda function to send emails using SES
+          - Sid: Emails
+            Effect: Allow
+            Action:
+              - ses:SendRawEmail
+            Resource: '*'
+          # Allow the Lambda function to read and delete emails from S3
+          - Sid: EmailStorage
+            Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:ListBucket
+              - s3:DeleteObject
+            Resource:
+              - !Sub arn:aws:s3:::${BucketName}/*
+              - !Sub arn:aws:s3:::${BucketName}
+      Roles:
+        - !Ref IAMLambdaExecRole
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+
+  # Log group for the Lambda function
+  CWLambdaLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/lambda/${AppName}
+      RetentionInDays: 7
+      Tags:
+        - Key: app
+          Value: !Ref AppName
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+
+  S3EmailsBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Ref BucketName
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: true
+        BlockPublicPolicy: true
+        IgnorePublicAcls: true
+        RestrictPublicBuckets: true
+      OwnershipControls:
+        Rules:
+          - ObjectOwnership: BucketOwnerEnforced
+      LifecycleConfiguration:
+        Rules:
+          - Id: auto-delete
+            Status: Enabled
+            ExpirationInDays: 1
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - BucketKeyEnabled: false
+            ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+
+  # Allow SES to put objects in the S3 bucket
+  S3BucketPolicy:
+    Type: AWS::S3::BucketPolicy
+    Properties:
+      Bucket: !Ref BucketName
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Sid: AllowSESPuts
+            Effect: Allow
+            Principal:
+              Service: ses.amazonaws.com
+            Action: s3:PutObject
+            Resource: !Sub arn:aws:s3:::${BucketName}/*
+            Condition:
+              StringEquals:
+                AWS:SourceAccount: !Ref AWS::AccountId
+              StringLike:
+                AWS:SourceArn: arn:aws:ses:*
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+
+  # Allow SES to invoke the Lambda function
+  LambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt LambdaFunctionEmailResponder.Arn
+      Action: lambda:InvokeFunction
+      Principal: ses.amazonaws.com
+      SourceArn: !Sub arn:aws:ses:${AWS::Region}:${AWS::AccountId}:receipt-rule-set/${AppName}-rule-set:receipt-rule/${AppName}-receipt-rule
+      SourceAccount: !Ref AWS::AccountId
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+
+  # Lambda function to respond to incoming emails
+  LambdaFunctionEmailResponder:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${AppName}
+      Handler: index.handler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt IAMLambdaExecRole.Arn
+      Code:
+        ZipFile: |
+          exports.handler = async (event) => {
+            console.log('Received event:', JSON.stringify(event, null, 2));
+          };
+      Environment:
+        Variables:
+          BUCKET_NAME: !Ref BucketName
+      LoggingConfig:
+        LogGroup: !Ref CWLambdaLogGroup
+        LogFormat: Text
+      RuntimeManagementConfig:
+        UpdateRuntimeOn: Auto
+      EphemeralStorage:
+        Size: 512
+      TracingConfig:
+        Mode: PassThrough
+      Tags:
+        - Key: app
+          Value: !Ref AppName
+      Architectures:
+        - arm64
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+
+  # SES email identity for the domain
+  SESEmailIdentity:
+    Type: AWS::SES::EmailIdentity
+    Properties:
+      EmailIdentity: !Ref DomainName
+      DkimAttributes:
+        SigningEnabled: true
+      FeedbackAttributes:
+        EmailForwardingEnabled: true
+      DkimSigningAttributes:
+        NextSigningKeyLength: RSA_2048_BIT
+      MailFromAttributes:
+        MailFromDomain: !Sub mail.${DomainName}
+        BehaviorOnMxFailure: USE_DEFAULT_VALUE
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+
+  # SES receipt rule set
+  ReceiptRuleSet:
+    Type: AWS::SES::ReceiptRuleSet
+    Properties:
+      RuleSetName: !Sub ${AppName}-rule-set
+
+  # SES receipt rule to store incoming emails in S3 and invoke the Lambda function
+  ReceiptRule:
+    Type: AWS::SES::ReceiptRule
+    Properties:
+      RuleSetName: !Ref ReceiptRuleSet
+      Rule:
+        Name: !Sub ${AppName}-receipt-rule
+        Enabled: true
+        Recipients:
+          - !Ref DomainName
+        Actions:
+          - S3Action:
+              BucketName: !Ref BucketName
+          - LambdaAction:
+              FunctionArn: !GetAtt LambdaFunctionEmailResponder.Arn
+
+Outputs:
+  SESIdentityDKIMToken1Name:
+    Description: The DKIM token for the SES email identity.
+    Value: !GetAtt SESEmailIdentity.DkimDNSTokenName1
+  SESIdentityDKIMToken1Value:
+    Description: The DKIM token value for the SES email identity.
+    Value: !GetAtt SESEmailIdentity.DkimDNSTokenValue1
+  SESIdentityDKIMToken2Name:
+    Description: The DKIM token for the SES email identity.
+    Value: !GetAtt SESEmailIdentity.DkimDNSTokenName2
+  SESIdentityDKIMToken2Value:
+    Description: The DKIM token value for the SES email identity.
+    Value: !GetAtt SESEmailIdentity.DkimDNSTokenValue2
+  SESIdentityDKIMToken3Name:
+    Description: The DKIM token for the SES email identity.
+    Value: !GetAtt SESEmailIdentity.DkimDNSTokenName3
+  SESIdentityDKIMToken3Value:
+    Description: The DKIM token value for the SES email identity.
+    Value: !GetAtt SESEmailIdentity.DkimDNSTokenValue3

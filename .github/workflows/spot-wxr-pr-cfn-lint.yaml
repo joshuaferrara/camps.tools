@@ -1,0 +1,21 @@
+name: wxr-messenger pull request workflow
+
+on:
+  pull_request:
+    paths:
+      - "wxr-messenger/cloudformation.yaml"
+
+jobs:
+  cloudformation-linter:
+    # Only run when the cloud formation template is modified
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Lint the CloudFormation template
+      - name: Linter install
+        uses: scottbrenner/cfn-lint-action@v2
+        with:
+          command: cfn-lint -t ./wxr-messenger/cloudformation.yaml

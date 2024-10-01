@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.tsbuildinfo
+.vscode/
+pnpm-lock.yaml
+package-lock.json
+test/coverage
+.DS_Store

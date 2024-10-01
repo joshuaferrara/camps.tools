@@ -1,0 +1,33 @@
+name: wxr-messenger pull request workflow
+permissions:
+  contents: read
+  checks: write
+  pull-requests: write
+
+on:
+  pull_request:
+    paths:
+      # Only run when the Lambda function code is modified
+      - "wxr-messenger/src/**/.ts"
+      - "wxr-messenger/src/**/.json"
+
+      # Ignore yaml files
+      - "!wxr-messenger/**/*.yaml"
+
+jobs:
+  lambda-build:
+    # Only run when the Lambda function code is modified
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+      - name: Install dependencies
+        working-directory: wxr-messenger
+        run: npm install
+      - name: Build
+        working-directory: wxr-messenger
+        run: npm run dist
+      - uses: ArtiomTr/jest-coverage-report-action@v2
+        with:
+          working-directory: wxr-messenger

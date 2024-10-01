@@ -1,0 +1,9 @@
+{
+  "moduleNameMapper": {
+    "postal-mime": "<rootDir>/test/postal-mime-stub.ts"
+  },
+  "collectCoverage": true,
+  "collectCoverageFrom": ["src/**/*.ts", "!src/openmeteo-client.ts"],
+  "coverageDirectory": "test/coverage",
+  "coverageReporters": ["json", "lcov", "text", "clover"]
+}
