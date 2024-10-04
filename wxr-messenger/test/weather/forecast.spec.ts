@@ -1,7 +1,7 @@
-import { getWeatherAsForecast } from '../src/forecast'
-import { getWeather } from '../src/openmeteo-client'
+import { getWeatherAsForecast } from '../../src/weather/forecast'
+import { getWeather } from '../../src/weather/openmeteo-client'
 
-jest.mock('../src/openmeteo-client')
+jest.mock('../../src/weather/openmeteo-client')
 const getWeatherMock = getWeather as jest.MockedFunction<typeof getWeather>
 
 describe('forecast.ts', () => {
