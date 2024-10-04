@@ -6,7 +6,7 @@ export const TIMEOUT_TABLE_NAME = process.env.TIMEOUT_TABLE_NAME
 
 type BounceRecord = {
   email: string
-  until: Date
+  until: string
 }
 
 /**
@@ -17,7 +17,7 @@ type BounceRecord = {
 export const timeoutEmail = async (email: string, until: Date) => {
   const bounceRecord: BounceRecord = {
     email,
-    until,
+    until: until.toISOString(),
   }
 
   const putCommand = new PutItemCommand({
