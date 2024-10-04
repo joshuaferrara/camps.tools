@@ -14,12 +14,17 @@ Parameters:
     Default: wxr-messenger-auto-responder
     Description: The name of the application, used for naming resources.
 
+  TimeoutTableName:
+    Type: String
+    Default: wxr-messenger-timeouts
+    Description: The name of the DynamoDB table where timeout records will be stored.
+
 Resources:
-  # IAM role for the Lambda function
-  IAMLambdaExecRole:
+  # IAM role for the email handler Lambda
+  IAMLambdaExecRoleForEmailHandler:
     Type: AWS::IAM::Role
     Properties:
-      RoleName: !Sub ${AppName}-LambdaExecRole
+      RoleName: !Sub ${AppName}-email-handler-role
       Path: /
       AssumeRolePolicyDocument:
         Version: '2012-10-17'
@@ -35,11 +40,11 @@ Resources:
     UpdateReplacePolicy: Retain
     DeletionPolicy: Delete
 
-  # Managed policy for the Lambda execution role
+  # Managed policy for the email handler Lambda
   IAMManagedPolicy:
     Type: AWS::IAM::ManagedPolicy
     Properties:
-      ManagedPolicyName: !Sub ${AppName}-LambdaExecPolicy
+      ManagedPolicyName: !Sub ${AppName}-email-handler-policy
       Path: /
       PolicyDocument:
         Version: '2012-10-17'
@@ -68,8 +73,14 @@ Resources:
             Resource:
               - !Sub arn:aws:s3:::${BucketName}/*
               - !Sub arn:aws:s3:::${BucketName}
+          # Allow the Lambda function to read items from the timeout table
+          - Sid: TimeoutTable
+            Effect: Allow
+            Action:
+              - dynamodb:GetItem
+            Resource: !GetAtt TimeoutTable.Arn
       Roles:
-        - !Ref IAMLambdaExecRole
+        - !Ref IAMLambdaExecRoleForEmailHandler
     UpdateReplacePolicy: Retain
     DeletionPolicy: Delete
 
@@ -133,7 +144,7 @@ Resources:
     DeletionPolicy: Delete
 
   # Allow SES to invoke the Lambda function
-  LambdaPermission:
+  SesEmailHandlerLambdaPermission:
     Type: AWS::Lambda::Permission
     Properties:
       FunctionName: !GetAtt LambdaFunctionEmailResponder.Arn
@@ -144,24 +155,25 @@ Resources:
     UpdateReplacePolicy: Retain
     DeletionPolicy: Delete
 
-  # Lambda function to respond to incoming emails
+  # Email handler lambda for inbound emails
   LambdaFunctionEmailResponder:
     Type: AWS::Lambda::Function
     Properties:
-      FunctionName: !Sub ${AppName}
-      Handler: index.handler
+      FunctionName: !Sub ${AppName}-email-handler
+      Handler: index.sesEmailHandler
       Runtime: nodejs20.x
       MemorySize: 128
       Timeout: 10
-      Role: !GetAtt IAMLambdaExecRole.Arn
+      Role: !GetAtt IAMLambdaExecRoleForEmailHandler.Arn
       Code:
         ZipFile: |
-          exports.handler = async (event) => {
+          exports.sesEmailHandler = async (event) => {
             console.log('Received event:', JSON.stringify(event, null, 2));
           };
       Environment:
         Variables:
           BUCKET_NAME: !Ref BucketName
+          TIMEOUT_TABLE_NAME: !Ref TimeoutTableName
       LoggingConfig:
         LogGroup: !Ref CWLambdaLogGroup
         LogFormat: Text
@@ -179,11 +191,31 @@ Resources:
     UpdateReplacePolicy: Retain
     DeletionPolicy: Delete
 
+  SESEmailConfigurationSet:
+    Type: AWS::SES::ConfigurationSet
+    Properties:
+      Name: wxr-messenger-email-configuration-set
+
+  SESEmailConfigurationSetEventDestination:
+    Type: AWS::SES::ConfigurationSetEventDestination
+    Properties:
+      ConfigurationSetName: !Ref SESEmailConfigurationSet
+      EventDestination: 
+        Name: sns-topic-for-lambda
+        SnsDestination:
+          TopicARN: !Ref SNSTopicForEmailEvents 
+        MatchingEventTypes:
+          - bounce
+          - complaint
+          - delivery_delay
+
   # SES email identity for the domain
   SESEmailIdentity:
     Type: AWS::SES::EmailIdentity
     Properties:
       EmailIdentity: !Ref DomainName
+      ConfigurationSetAttributes:
+        ConfigurationSetName: !Ref SESEmailConfigurationSet
       DkimAttributes:
         SigningEnabled: true
       FeedbackAttributes:
@@ -217,6 +249,123 @@ Resources:
               BucketName: !Ref BucketName
           - LambdaAction:
               FunctionArn: !GetAtt LambdaFunctionEmailResponder.Arn
+
+  TimeoutTable:
+    Type: AWS::DynamoDB::Table
+    Properties:
+      TableName: !Ref TimeoutTableName
+      AttributeDefinitions:
+        - AttributeName: email
+          AttributeType: S
+      KeySchema:
+        - AttributeName: email
+          KeyType: HASH
+      BillingMode: PROVISIONED
+      ProvisionedThroughput: 
+        ReadCapacityUnits: 3
+        WriteCapacityUnits: 3
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Retain
+
+  SNSTopicForEmailEvents:
+    Type: AWS::SNS::Topic
+    Properties:
+      DisplayName: wxr-messenger-email-events
+      TopicName: wxr-messenger-email-events
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+
+  LambdaFunctionEmailEventHandler:
+    Type: AWS::Lambda::Function
+    Properties:
+      FunctionName: !Sub ${AppName}-event-handler
+      Handler: index.sesComplaintAndBounceHandler
+      Runtime: nodejs20.x
+      MemorySize: 128
+      Timeout: 10
+      Role: !GetAtt IAMLambdaExecRoleForEmailEventHandler.Arn
+      Code:
+        ZipFile: |
+          exports.sesComplaintAndBounceHandler = async (event) => {
+            console.log('Received event:', JSON.stringify(event, null, 2));
+          };
+      Environment:
+        Variables:
+          TIMEOUT_TABLE_NAME: !Ref TimeoutTableName
+      LoggingConfig:
+        LogGroup: !Ref CWLambdaLogGroup
+        LogFormat: Text
+      RuntimeManagementConfig:
+        UpdateRuntimeOn: Auto
+      EphemeralStorage:
+        Size: 512
+      TracingConfig:
+        Mode: PassThrough
+      Tags:
+        - Key: app
+          Value: !Ref AppName
+      Architectures:
+        - arm64
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+
+  SesEmailEventHandlerLambdaPermission:
+    Type: AWS::Lambda::Permission
+    Properties:
+      FunctionName: !GetAtt LambdaFunctionEmailEventHandler.Arn
+      Action: lambda:InvokeFunction
+      Principal: ses.amazonaws.com
+      SourceArn: !Sub arn:aws:ses:${AWS::Region}:${AWS::AccountId}:receipt-rule-set/${AppName}-rule-set:receipt-rule/${AppName}-receipt-rule
+      SourceAccount: !Ref AWS::AccountId
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+
+  # Managed policy for the email handler Lambda
+  IAMManagedPolicyForEmailEventHandler:
+    Type: AWS::IAM::ManagedPolicy
+    Properties:
+      ManagedPolicyName: !Sub ${AppName}-EmailEventHandlerPolicy
+      Path: /
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          # Allow the Lambda function to write logs to CloudWatch
+          - Sid: Logging
+            Effect: Allow
+            Action:
+              - logs:CreateLogGroup
+              - logs:CreateLogStream
+              - logs:PutLogEvents
+            Resource: '*'
+          # Allow the Lambda function to put items in the timeout table
+          - Sid: TimeoutTable
+            Effect: Allow
+            Action:
+              - dynamodb:PutItem
+            Resource: !GetAtt TimeoutTable.Arn
+      Roles:
+        - !Ref IAMLambdaExecRoleForEmailEventHandler
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
+
+  IAMLambdaExecRoleForEmailEventHandler:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub ${AppName}-EmailEventHandlerRole
+      Path: /
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action: sts:AssumeRole
+            Principal:
+              Service: lambda.amazonaws.com
+      MaxSessionDuration: 3600
+      Tags:
+        - Key: app
+          Value: !Ref AppName
+    UpdateReplacePolicy: Retain
+    DeletionPolicy: Delete
 
 Outputs:
   SESIdentityDKIMToken1Name:

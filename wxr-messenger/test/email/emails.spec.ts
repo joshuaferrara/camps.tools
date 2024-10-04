@@ -10,8 +10,8 @@ import {
   findLatLngInEmail,
   getEmailFromS3ByMessageId,
   replyToEmail,
-} from '../src/emails'
-import PostalMime from './postal-mime-stub'
+} from '../../src/email/emails'
+import PostalMime from '../postal-mime-stub'
 
 const s3Mock = mockClient(S3)
 const sesMock = mockClient(SES)

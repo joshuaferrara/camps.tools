@@ -1,11 +1,11 @@
 import { SESEvent } from 'aws-lambda'
 import 'aws-sdk-client-mock-jest'
-import { findLatLngInEmail, getEmailFromS3ByMessageId, replyToEmail } from '../src/emails'
-import { getWeatherAsForecast } from '../src/forecast'
-import { handler } from '../src/index'
+import { findLatLngInEmail, getEmailFromS3ByMessageId, replyToEmail } from '../../src/email/emails'
+import sesEmailHandler from '../../src/lambdas/ses-email-handler'
+import { getWeatherAsForecast } from '../../src/weather/forecast'
 
-jest.mock('../src/emails')
-jest.mock('../src/forecast')
+jest.mock('../../src/email/emails')
+jest.mock('../../src/weather/forecast')
 const mockedGetEmailByMessageId = getEmailFromS3ByMessageId as jest.MockedFunction<
   typeof getEmailFromS3ByMessageId
 >
@@ -24,7 +24,7 @@ describe('handler', () => {
     const event: SESEvent = { Records: [] }
     console.error = jest.fn()
 
-    await handler(event)
+    await sesEmailHandler(event)
 
     expect(console.error).toHaveBeenCalledWith('No records found in SESEvent')
   })
@@ -33,7 +33,7 @@ describe('handler', () => {
     const event: SESEvent = { Records: [{ ses: { mail: {} } }] } as any
     console.error = jest.fn()
 
-    await handler(event)
+    await sesEmailHandler(event)
 
     expect(console.error).toHaveBeenCalledWith('No messageId found in SESEvent')
   })
@@ -43,7 +43,7 @@ describe('handler', () => {
     mockedGetEmailByMessageId.mockResolvedValue(undefined)
     console.error = jest.fn()
 
-    await handler(event)
+    await sesEmailHandler(event)
 
     expect(console.error).toHaveBeenCalledWith('Email not found in S3 bucket messageID=123')
   })
@@ -56,7 +56,7 @@ describe('handler', () => {
     } as any)
     console.log = jest.fn()
 
-    await handler(event)
+    await sesEmailHandler(event)
 
     expect(console.log).toHaveBeenCalledWith(
       "Ignoring email from non-allow-listed sender: 'test@example.com'"
@@ -74,7 +74,7 @@ describe('handler', () => {
     mockedFindLatLng.mockResolvedValue({ latitude: null, longitude: null })
     console.log = jest.fn()
 
-    await handler(event)
+    await sesEmailHandler(event)
 
     expect(console.log).toHaveBeenCalledWith('Ignoring email without position report')
   })
@@ -92,7 +92,7 @@ describe('handler', () => {
     mockedGetWeatherAsForecast.mockResolvedValue(['test', 'test2'])
     console.log = jest.fn()
 
-    await handler(event)
+    await sesEmailHandler(event)
 
     expect(console.log).toHaveBeenCalledWith('Email sent successfully')
     expect(mockedGetEmailByMessageId).toHaveBeenCalledWith('', '123')
@@ -125,7 +125,7 @@ describe('handler', () => {
     mockedGetWeatherAsForecast.mockResolvedValue(['test', 'test2'])
     console.log = jest.fn()
 
-    await handler(event)
+    await sesEmailHandler(event)
 
     expect(console.log).toHaveBeenCalledWith('Email sent successfully')
     expect(mockedGetEmailByMessageId).toHaveBeenCalledWith('', '123')
@@ -157,7 +157,7 @@ describe('handler', () => {
     mockedGetEmailByMessageId.mockRejectedValue('Error')
     console.error = jest.fn()
 
-    await handler(event)
+    await sesEmailHandler(event)
 
     expect(console.error).toHaveBeenCalledWith('Error processing email:', 'Error')
   })
