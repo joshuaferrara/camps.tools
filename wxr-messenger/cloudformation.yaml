@@ -272,6 +272,9 @@ Resources:
     Properties:
       DisplayName: wxr-messenger-email-events
       TopicName: wxr-messenger-email-events
+      Subscription:
+        - Endpoint: !GetAtt LambdaFunctionEmailEventHandler.Arn 
+          Protocol: lambda
     UpdateReplacePolicy: Retain
     DeletionPolicy: Delete
 
@@ -314,8 +317,8 @@ Resources:
     Properties:
       FunctionName: !GetAtt LambdaFunctionEmailEventHandler.Arn
       Action: lambda:InvokeFunction
-      Principal: ses.amazonaws.com
-      SourceArn: !Sub arn:aws:ses:${AWS::Region}:${AWS::AccountId}:receipt-rule-set/${AppName}-rule-set:receipt-rule/${AppName}-receipt-rule
+      Principal: sns.amazonaws.com
+      SourceArn: !Ref SNSTopicForEmailEvents
       SourceAccount: !Ref AWS::AccountId
     UpdateReplacePolicy: Retain
     DeletionPolicy: Delete
