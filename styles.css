@@ -1,0 +1,96 @@
+@import url("https://fonts.googleapis.com/css?family=Roboto+Slab&display=swap");
+@import url("accordion.css");
+
+html,
+body,
+#content {
+  height: 100%;
+}
+
+body {
+  font-family: "Roboto Slab", serif;
+  padding: 2em;
+
+  background-color: Canvas;
+  color: CanvasText;
+  color-scheme: light dark;
+}
+
+strong {
+  text-decoration: red wavy underline;
+  animation: rainbow 1s infinite;
+}
+
+@keyframes rainbow {
+  0% {
+    text-decoration-color: hsl(0, 100%, 50%);
+  }
+  50% {
+    text-decoration-color: hsl(180, 100%, 50%);
+  }
+  100% {
+    text-decoration-color: hsl(360, 100%, 50%);
+  }
+}
+
+.lucide {
+  max-width: 16px;
+  max-height: 16px;
+  line-height: 21px;
+}
+
+p.warning {
+  background-color: rgb(204, 122, 0);
+  padding: 0.5em;
+}
+
+#content {
+  max-width: 600px;
+  margin: 0 auto;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+}
+
+header {
+  display: flex;
+  align-items: flex-end;
+}
+
+header > h1 {
+  margin: 0;
+  text-decoration: underline;
+  font-size: 2rem;
+}
+
+#logo {
+  max-width: 48px;
+  max-height: 48px;
+}
+
+@media (prefers-color-scheme: dark) {
+  #logo {
+    filter: brightness(0) invert(1);
+  }
+}
+
+li {
+  margin-bottom: 0;
+}
+
+ul {
+  margin-bottom: 0.5rem;
+}
+
+pre {
+  display: inline;
+  color: inherit;
+}
+
+h1,
+h2,
+h3,
+p {
+  margin-bottom: 0.5rem;
+}

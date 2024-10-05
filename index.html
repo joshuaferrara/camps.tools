@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en-us">
+  <head>
+    <title>camps.tools</title>
+    <link rel="stylesheet" type="text/css" href="styles.css" />
+    <meta name="viewport" content="width=device-width, initial-scale=0.9" />
+    <link rel="icon" type="image/png" href="folding-chair.png" />
+    <script src="https://unpkg.com/lucide@latest"></script>
+  </head>
+
+  <body>
+    <section id="content">
+      <section>
+        <header>
+          <img
+            id="logo"
+            src="folding-chair.png"
+            alt="Folding Camp Stool Icon"
+          />
+          <h1 id="title">camps.tools</h1>
+        </header>
+
+        <h2>Weather Messenger Service</h2>
+
+        <p class="warning">
+          <strong>Disclaimer</strong> This service is provided as-is and is not
+          guaranteed for accuracy. Use at your own risk. While this service is
+          provided for free, Spot may charge a fee for messages sent to and from
+          this service to your device, depending on the plan you have with Spot.
+          Please refer to
+          <a
+            href="https://www.findmespot.com/en-us/products-services/service-plans"
+            target="_blank"
+            >Spot's website</a
+          >
+          for more information. You are solely liable for any charges you may
+          incur as a result of using this service.
+        </p>
+
+        <p>
+          Need the weather forecast while you're out backpacking? As long as
+          you've got a
+          <a href="https://findmespot.com" target="_blank"
+            >Spot satellite messenger</a
+          >, you're in luck. <br /><br />
+          Add one of the following email addresses to your Spot messenger's
+          contacts (<a
+            href="https://www.youtube.com/watch?v=h0rTtnbm6pQ"
+            target="_blank"
+            >how-to</a
+          >), send it any message <i>with location enabled</i>, and you'll get a
+          three-day weather forecast in return.
+        </p>
+
+        <ul>
+          <li>
+            Imperial Forecast:
+            <pre>fcst+imp@camps.tools</pre>
+            <ul>
+              <li>(Fahreinheit - mph - inches)</li>
+            </ul>
+          </li>
+          <li>
+            Metric Forecast:
+            <pre>fcst@camps.tools</pre>
+            <ul>
+              <li>(Celsius - meters/sec - millimeters)</li>
+            </ul>
+          </li>
+        </ul>
+
+        <p>
+          Weather forecasts are condensed as messages on the Spot network must
+          be less than or equal to 140 characters in length. Units and
+          short-hand column identifiers are only included in the first line of
+          the reply. See the example forecast with a legend below for more
+          details.
+          <br /><br />
+          Example Forecast:
+        </p>
+
+        <pre>
+&boxdr;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh; Temperature
+&boxv;    &boxdr;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh; Relative Humidity
+&boxv;    &boxv;      &boxdr;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh; Wind Speed
+&boxv;    &boxv;      &boxv;       &boxdr;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh; Wind Gust
+&boxv;    &boxv;      &boxv;       &boxv;        &boxdr;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh; Precipitation
+&boxur;&boxh;&boxh;&boxh; &boxur;&boxh;&boxh;&boxh;&boxh;&boxh; &boxur;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh; &boxur;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh; &boxur;&boxh;&boxh;
+65&deg;F RH 60% WS 5mph WG 10mph 0in  &#x25C4;&boxh;&boxh;&boxh; Current Conditions
+01-01 70/60 5 10 0%               &#x25C4;&boxh;&boxdl;
+01-02 65/55 5 10 0%               &#x25C4;&boxh;&boxvl;&boxh; 3 day forecast
+01-03 75/70 0 0 0%                &#x25C4;&boxh;&boxul;
+&boxdr;&boxh;&boxh;&boxh;&boxh; &boxdr;&boxh;&boxh;&boxh;&boxh; &boxdr; &boxdr; &boxdr;&boxh;&boxh;
+&boxv;     &boxv;     &boxv; &boxv; &boxur;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh; Preciptation Probability
+&boxv;     &boxv;     &boxv; &boxur;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh; Wind Gust (max)
+&boxv;     &boxv;     &boxur;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh; Wind Speed (max)
+&boxv;     &boxur;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh; Temp Hi/Lo
+&boxur;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh;&boxh; Date MM-DD
+          </pre
+        >
+      </section>
+
+      <footer>
+        <a href="https://github.com/joshuaferrara/camps.tools" target="_blank"
+          ><i data-lucide="github"></i>Contribute</a
+        >
+        &#8226;
+        <a href="https://open-meteo.com/" target="_blank"
+          >Weather data from Open-Meteo</a
+        >
+        <br />
+        <a
+          href="https://www.flaticon.com/free-icons/folding-chair"
+          title="folding chair icons"
+          >Folding chair icons created by Freepik - Flaticon</a
+        >
+      </footer>
+    </section>
+    <script>
+      lucide.createIcons();
+    </script>
+  </body>
+</html>
