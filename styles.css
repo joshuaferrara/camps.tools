@@ -39,7 +39,7 @@ strong {
   line-height: 21px;
 }
 
-p.warning {
+.warning {
   background-color: rgb(204, 122, 0);
   padding: 0.5em;
 }
