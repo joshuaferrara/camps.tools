@@ -101,13 +101,13 @@ describe('handler', () => {
     expect(mockedReplyToEmail).toHaveBeenCalledWith(
       expect.anything(),
       'test@findmespot.com',
-      'wxr.tools <fcst@wxr.tools>',
+      'fcst@wxr.tools <fcst@wxr.tools>',
       'test'
     )
     expect(mockedReplyToEmail).toHaveBeenCalledWith(
       expect.anything(),
       'test@findmespot.com',
-      'wxr.tools <fcst@wxr.tools>',
+      'fcst@wxr.tools <fcst@wxr.tools>',
       'test2'
     )
   })
@@ -134,13 +134,13 @@ describe('handler', () => {
     expect(mockedReplyToEmail).toHaveBeenCalledWith(
       expect.anything(),
       'test@findmespot.com',
-      'wxr.tools <fcst+imp@wxr.tools>',
+      'fcst+imp@wxr.tools <fcst+imp@wxr.tools>',
       'test'
     )
     expect(mockedReplyToEmail).toHaveBeenCalledWith(
       expect.anything(),
       'test@findmespot.com',
-      'wxr.tools <fcst+imp@wxr.tools>',
+      'fcst+imp@wxr.tools <fcst+imp@wxr.tools>',
       'test2'
     )
   })
