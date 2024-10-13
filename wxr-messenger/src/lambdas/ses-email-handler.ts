@@ -67,7 +67,7 @@ const sesEmailHandler = async (event: SESEvent) => {
 
     // Send responses
     for (const curMessage of weatherMessages) {
-      await replyToEmail(email, senderEmail, `wxr.tools <${receiverEmail}>`, curMessage)
+      await replyToEmail(email, senderEmail, `${receiverEmail} <${receiverEmail}>`, curMessage)
     }
     console.log('Email sent successfully')
   } catch (error) {
