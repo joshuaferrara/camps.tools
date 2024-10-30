@@ -95,6 +95,7 @@ const expireEmailInS3 = async (bucket: string, messageId: string) => {
  * @param sendTo The email address to send the response to
  * @param from The email address to send the response from
  * @param responseBody The body of the response email
+ * @returns The raw email that was sent
  */
 const replyToEmail = async (
   email: Email,
@@ -120,6 +121,7 @@ const replyToEmail = async (
     },
   }
   await ses.sendRawEmail(params)
+  return rawEmail
 }
 
 export { expireEmailInS3, findLatLngInEmail, getEmailFromS3ByMessageId, replyToEmail }

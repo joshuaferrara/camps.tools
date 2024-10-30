@@ -77,8 +77,17 @@ const sesEmailHandler = async (event: SESEvent) => {
     }
 
     // Send responses
+    email.subject = '' // Clear the subject as it counts against the 140 character limit
     for (const curMessage of weatherMessages) {
-      await replyToEmail(email, senderEmail, `${receiverEmail} <${receiverEmail}>`, curMessage)
+      const rawEmailOut = await replyToEmail(
+        email,
+        senderEmail,
+        `${receiverEmail} <${receiverEmail}>`,
+        curMessage
+      )
+      if (isDebug) {
+        console.log(JSON.stringify(rawEmailOut, null, 2))
+      }
     }
     console.log('Email sent successfully')
   } catch (error) {
