@@ -59,7 +59,7 @@ describe('handler', () => {
     await sesEmailHandler(event)
 
     expect(console.log).toHaveBeenCalledWith(
-      "Ignoring email from non-allow-listed sender: 'test@example.com'"
+      'Ignoring email from non-allow-listed senderEmail=test@example.com'
     )
   })
 
