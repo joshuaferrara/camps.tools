@@ -35,6 +35,11 @@ const sesEmailHandler = async (event: SESEvent) => {
 
     // Only respond to emails from the SPOT service
     const receiverEmail = email?.to?.[0]?.address
+    const isDebug = receiverEmail?.includes('debug')
+    if (isDebug) {
+      console.log(JSON.stringify(email, null, 2))
+    }
+
     const senderEmail = email?.from.address
     if (
       !senderEmail ||
@@ -42,7 +47,7 @@ const sesEmailHandler = async (event: SESEvent) => {
         !senderEmail.includes('@textmyspotx.com') &&
         senderEmail !== 'scjosh2@gmail.com')
     ) {
-      console.log(`Ignoring email from non-allow-listed sender: '${senderEmail}'`)
+      console.log(`Ignoring email from non-allow-listed senderEmail=${senderEmail}`)
       return
     }
 
@@ -64,6 +69,12 @@ const sesEmailHandler = async (event: SESEvent) => {
 
     // Get the weather
     let weatherMessages = await getWeatherAsForecast(latLng.latitude, latLng.longitude, units)
+    if (isDebug) {
+      console.log(
+        `Sending ${weatherMessages.length} messages to ${receiverEmail} from ${senderEmail}`
+      )
+      console.log(JSON.stringify(weatherMessages, null, 2))
+    }
 
     // Send responses
     for (const curMessage of weatherMessages) {
